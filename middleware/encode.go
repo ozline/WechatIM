@@ -1,6 +1,6 @@
 package middleware
 
-import (
+import(
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/binary"
