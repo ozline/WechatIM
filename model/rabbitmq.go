@@ -18,10 +18,10 @@ func RabbitMQInit() bool {
 		conf.Config.RabbitMQ.Password, "@",
 		conf.Config.RabbitMQ.Address, "/",
 	}, "")
-	fmt.Println(path)
 	Conn, err = amqp.Dial(path)
 	if err != nil {
 		return false
 	}
+	fmt.Println("RabbitMQ连接成功")
 	return true
 }

@@ -24,6 +24,7 @@ func DBInit() bool { //连接RDS
 	if err := DB.Ping(); err != nil {
 		fmt.Println("Error: DBInit ", err)
 	}
+	fmt.Println("数据库连接成功")
 	return true
 }
 
