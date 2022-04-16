@@ -63,8 +63,7 @@ func Ping(c *gin.Context) {
 }
 
 func Chat(c *gin.Context) {
-	//升级get请求为webSocket协议
-	// go ChatProgress(c)
+	//升级为webSocket协议
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if !global.UnifiedErrorHandle(err, "升级WebSocket协议") {
 		return
@@ -72,24 +71,39 @@ func Chat(c *gin.Context) {
 	defer ws.Close()
 	var forever chan struct{}
 
-	ch, q := model.RabbitMQCreateQueue("hello")
+	//创建信道
+	ch := model.RabbitMQCreateChannel()
 	defer ch.Close()
+	//创建交换机
+	result := model.RabbitMQCreateExchange(ch, "TestExchange")
+	if !result {
+		global.UnifiedPrintln("RabbitMQ创建交换机失败", nil)
+	}
 
+	//创建随机Queue并绑定至交换机
+	q := model.RabbitMQCreateQueue(ch, "")
+	result = model.RabbitMQQueueBind(ch, q, "TestExchange")
+
+	//创建消费者
+	msgs := model.RabbitMQConsume(ch)
+
+	//Websocket接收消息，推送至RabbitMQ
 	go func() {
-		_, message, err := ws.ReadMessage()
-		if !global.UnifiedErrorHandle(err, "Websocket发送消息") || model.RabbitMQPublish(ch, q, message) {
-			return
+		for {
+			_, message, err := ws.ReadMessage()
+			if !global.UnifiedErrorHandle(err, "Websocket发送消息") || !model.RabbitMQExchangePublish(ch, "TestExchange", message) {
+				return
+			}
 		}
 	}()
 
-	msgs := model.RabbitMQConsume(ch, q)
+	//接收RabbitMQ消息，推送至Websocket
 	go func() {
 		for d := range msgs {
 			err = ws.WriteMessage(websocket.TextMessage, d.Body)
 			if !global.UnifiedErrorHandle(err, "Websocket读取消息") {
 				return
 			}
-			// log.Printf("Received a message: %s", d.Body)
 		}
 	}()
 	<-forever

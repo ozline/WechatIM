@@ -22,22 +22,50 @@ func RabbitMQInit() bool {
 	return global.UnifiedErrorHandle(err, "RabbitMQ连接")
 }
 
-func RabbitMQCreateQueue(name string) (*amqp.Channel, amqp.Queue) {
+func RabbitMQCreateChannel() *amqp.Channel {
 	ch, err := Conn.Channel()
 	global.UnifiedErrorHandle(err, "RabbitMQ创建通道")
+	return ch
+}
+
+func RabbitMQCreateQueue(ch *amqp.Channel, name string) amqp.Queue {
 	q, err := ch.QueueDeclare(
 		name,
 		false,
+		false,
+		true,
+		false,
+		nil,
+	)
+	global.UnifiedErrorHandle(err, "RabbitMQ声明队列")
+	return q
+}
+
+func RabbitMQCreateExchange(ch *amqp.Channel, name string) bool {
+	err := ch.ExchangeDeclare(
+		name,
+		"fanout",
+		true,
 		false,
 		false,
 		false,
 		nil,
 	)
-	global.UnifiedErrorHandle(err, "RabbitMQ声明队列")
-	return ch, q
+	return global.UnifiedErrorHandle(err, "RabbitMQ声明交换机")
 }
 
-func RabbitMQPublish(ch *amqp.Channel, q amqp.Queue, body []byte) bool {
+func RabbitMQQueueBind(ch *amqp.Channel, q amqp.Queue, exchange string) bool {
+	err := ch.QueueBind(
+		q.Name,
+		"",
+		exchange,
+		false,
+		nil,
+	)
+	return global.UnifiedErrorHandle(err, "RabbitMQ队列绑定交换机")
+}
+
+func RabbitMQQueuePublish(ch *amqp.Channel, q amqp.Queue, body []byte) bool {
 	err := ch.Publish(
 		"",
 		q.Name,
@@ -48,12 +76,26 @@ func RabbitMQPublish(ch *amqp.Channel, q amqp.Queue, body []byte) bool {
 			Body:        body,
 		},
 	)
-	return global.UnifiedErrorHandle(err, "RabbitMQ发送消息")
+	return global.UnifiedErrorHandle(err, "RabbitMQ发送消息_Queue")
 }
 
-func RabbitMQConsume(ch *amqp.Channel, q amqp.Queue) <-chan amqp.Delivery {
+func RabbitMQExchangePublish(ch *amqp.Channel, exchange string, body []byte) bool {
+	err := ch.Publish(
+		exchange,
+		"",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        body,
+		},
+	)
+	return global.UnifiedErrorHandle(err, "RabbitMQ发送消息_Exchange")
+}
+
+func RabbitMQConsume(ch *amqp.Channel) <-chan amqp.Delivery {
 	msgs, err := ch.Consume(
-		q.Name,
+		"",
 		"",
 		true,
 		false,

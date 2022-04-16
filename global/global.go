@@ -38,7 +38,7 @@ func UnifiedReturn(c *gin.Context, code int, msg interface{}, data interface{}, 
 
 func UnifiedPrintln(msg string, err error) {
 	if err != nil {
-		fmt.Println("[Error] in:" + msg + " err:" + err.Error())
+		fmt.Println("[Error]  in:「" + msg + "」 err:「" + err.Error() + "」")
 	} else {
 		fmt.Println("[Message] " + msg)
 	}
