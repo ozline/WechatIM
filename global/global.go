@@ -38,15 +38,17 @@ func UnifiedReturn(c *gin.Context, code int, msg interface{}, data interface{}, 
 
 func UnifiedPrintln(msg string, err error) {
 	if err != nil {
-		fmt.Println("[Error] msg:" + msg + " err:" + err.Error())
+		fmt.Println("[Error] in:" + msg + " err:" + err.Error())
 	} else {
-		fmt.Println("SystemMessage:" + msg)
+		fmt.Println("[Message] " + msg)
 	}
 }
 
-func UnifiedErrorHandle(err error) bool {
+func UnifiedErrorHandle(err error, position string) bool {
 	if err != nil {
-		UnifiedPrintln("DefaultError", err)
+		if position != "" { //当不需要输出错误时
+			UnifiedPrintln(position, err)
+		}
 		return false
 	} else {
 		return true

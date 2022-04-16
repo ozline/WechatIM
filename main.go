@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"wechat/conf"
+	"wechat/global"
 	"wechat/model"
 	"wechat/routes"
 )
@@ -22,6 +22,6 @@ func main() {
 		r := routes.NewRouter()
 		_ = r.Run("0.0.0.0:" + HTTP_PORT)
 	} else {
-		fmt.Println("数据库或RabbitMQ连接失败")
+		global.UnifiedPrintln("数据库或RabbitMQ连接失败", nil)
 	}
 }

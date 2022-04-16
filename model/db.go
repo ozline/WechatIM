@@ -2,7 +2,6 @@ package model
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"wechat/conf"
 	"wechat/global"
@@ -22,17 +21,13 @@ func DBInit() bool { //连接RDS
 	DB, _ = sql.Open("mysql", path)
 	DB.SetConnMaxLifetime(100)
 	DB.SetMaxIdleConns(10)
-	if err := DB.Ping(); err != nil {
-		global.UnifiedPrintln("数据库Ping失败", err)
-	}
-	global.UnifiedPrintln("数据库连接成功", nil)
-	return true
+	err := DB.Ping()
+
+	return global.UnifiedErrorHandle(err, "数据库PING")
 }
 
 func DBDestory() {
-	if err := DB.Close(); err != nil {
-		fmt.Println("Error: DBDestory ", err)
-	}
+	global.UnifiedErrorHandle(DB.Close(), "数据库销毁")
 }
 
 //获取数量，where表示限定条件，不需要再写WHERE，但是多条件要加AND
@@ -41,7 +36,7 @@ func DBGetCount(table string, where string) (int, error) {
 	cmd += " WHERE " + where
 	var count = 0
 	err := DB.QueryRow(cmd).Scan(&count)
-	if err != nil {
+	if global.UnifiedErrorHandle(err, "") {
 		return -1, err
 	} else {
 		return count, nil

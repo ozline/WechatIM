@@ -1,9 +1,9 @@
 package model
 
 import (
-	"fmt"
 	"strings"
 	"wechat/conf"
+	"wechat/global"
 
 	"github.com/streadway/amqp"
 )
@@ -19,9 +19,5 @@ func RabbitMQInit() bool {
 		conf.Config.RabbitMQ.Address, "/",
 	}, "")
 	Conn, err = amqp.Dial(path)
-	if err != nil {
-		return false
-	}
-	fmt.Println("RabbitMQ连接成功")
-	return true
+	return global.UnifiedErrorHandle(err, "RabbitMQ连接")
 }
