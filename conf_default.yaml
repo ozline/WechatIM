@@ -1,0 +1,17 @@
+httpPort: #运行端口
+mysql:
+  username:
+  password:
+  ip: #DB地址
+  port: #DB端口
+  dbname: #DB名称
+  table:
+    users: #用户表
+    rooms: #房间表
+rabbitmq:
+  address: #RabbitMQ地址
+  username:
+  password:
+admin:
+  secret: #BASE64,JWTToken
+  name: #签名颁发者,JWTToken
