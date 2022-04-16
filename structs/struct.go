@@ -1,6 +1,6 @@
 package structs
 
-import(
+import (
 	"github.com/golang-jwt/jwt"
 )
 
@@ -27,15 +27,20 @@ type Conf struct {
 		Port     string `yaml:"port"`
 		DBName   string `yaml:"dbname"`
 		Table    struct {
-			Users string `yaml:"users"`
-			Test  string `yaml:"test"`
-			Group string `yaml:"messages_group"`
+			Users   string `yaml:"users"`
+			Test    string `yaml:"test"`
+			Group   string `yaml:"messages_group"`
 			Private string `yaml:"messages_private"`
 		}
 	}
-	Admin struct{
+	RabbitMQ struct {
+		Address  string `yaml:"address"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	}
+	Admin struct {
 		Secret string `yaml:"secret"`
-		Name string `yaml:"name"`
+		Name   string `yaml:"name"`
 	}
 }
 

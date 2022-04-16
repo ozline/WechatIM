@@ -1,10 +1,10 @@
 package model
 
 import (
-	"wechat/conf"
 	"database/sql"
 	"fmt"
 	"strings"
+	"wechat/conf"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -12,7 +12,12 @@ import (
 var DB *sql.DB
 
 func DBInit() bool { //连接RDS
-	path := strings.Join([]string{conf.Config.Mysql.Username, ":", conf.Config.Mysql.Password, "@tcp(", conf.Config.Mysql.Address, ":", conf.Config.Mysql.Port, ")/", conf.Config.Mysql.DBName, "?charset=utf8&parseTime=True"}, "")
+	path := strings.Join([]string{
+		conf.Config.Mysql.Username, ":",
+		conf.Config.Mysql.Password, "@tcp(",
+		conf.Config.Mysql.Address, ":",
+		conf.Config.Mysql.Port, ")/",
+		conf.Config.Mysql.DBName, "?charset=utf8&parseTime=True"}, "")
 	DB, _ = sql.Open("mysql", path)
 	DB.SetConnMaxLifetime(100)
 	DB.SetMaxIdleConns(10)
