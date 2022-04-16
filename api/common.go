@@ -6,6 +6,7 @@ import (
 	"wechat/conf"
 	"wechat/global"
 	"wechat/middleware"
+	"wechat/model"
 	"wechat/structs"
 
 	"github.com/gin-gonic/gin"
@@ -65,46 +66,31 @@ func Chat(c *gin.Context) {
 	//升级get请求为webSocket协议
 	// go ChatProgress(c)
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
+	if !global.UnifiedErrorHandle(err, "升级WebSocket协议") {
 		return
 	}
 	defer ws.Close()
-	for {
-		mt, message, err := ws.ReadMessage()
-		if err != nil {
-			break
-		}
-		if string(message) == "ping" {
-			message = []byte("pong")
+	var forever chan struct{}
 
-			//TODO:这部分似乎就是curd了
-		}
-		err = ws.WriteMessage(mt, message)
-		if err != nil {
-			break
-		}
-	}
-}
+	ch, q := model.RabbitMQCreateQueue("hello")
+	defer ch.Close()
 
-func ChatProgress(c *gin.Context) {
-	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		return
-	}
-	defer ws.Close()
-	for {
-		mt, message, err := ws.ReadMessage()
-		if err != nil {
-			break
+	go func() {
+		_, message, err := ws.ReadMessage()
+		if !global.UnifiedErrorHandle(err, "Websocket发送消息") || model.RabbitMQPublish(ch, q, message) {
+			return
 		}
-		if string(message) == "ping" {
-			message = []byte("pong")
+	}()
 
-			//TODO:这部分似乎就是curd了
+	msgs := model.RabbitMQConsume(ch, q)
+	go func() {
+		for d := range msgs {
+			err = ws.WriteMessage(websocket.TextMessage, d.Body)
+			if !global.UnifiedErrorHandle(err, "Websocket读取消息") {
+				return
+			}
+			// log.Printf("Received a message: %s", d.Body)
 		}
-		err = ws.WriteMessage(mt, message)
-		if err != nil {
-			break
-		}
-	}
+	}()
+	<-forever
 }

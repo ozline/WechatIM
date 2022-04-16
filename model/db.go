@@ -23,11 +23,11 @@ func DBInit() bool { //连接RDS
 	DB.SetMaxIdleConns(10)
 	err := DB.Ping()
 
-	return global.UnifiedErrorHandle(err, "数据库PING")
+	return global.UnifiedErrorHandle(err, "DB ping")
 }
 
 func DBDestory() {
-	global.UnifiedErrorHandle(DB.Close(), "数据库销毁")
+	global.UnifiedErrorHandle(DB.Close(), "DB Destory")
 }
 
 //获取数量，where表示限定条件，不需要再写WHERE，但是多条件要加AND
@@ -36,7 +36,7 @@ func DBGetCount(table string, where string) (int, error) {
 	cmd += " WHERE " + where
 	var count = 0
 	err := DB.QueryRow(cmd).Scan(&count)
-	if global.UnifiedErrorHandle(err, "") {
+	if global.UnifiedErrorHandle(err, "DB 查询行数") {
 		return -1, err
 	} else {
 		return count, nil
