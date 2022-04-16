@@ -55,9 +55,9 @@ func Ping(c *gin.Context) {
 	token := c.Request.Header.Get("AuthToken")
 	if token != "" {
 		claims, _ := middleware.JWTParse(token)
-		global.UnifiedReturn(c, global.Success, "ok", claims, "")
+		global.UnifiedReturn(c, global.Success, global.MsgGeneral, claims, "")
 	} else {
-		global.UnifiedReturn(c, global.Success, "ok", nil, "")
+		global.UnifiedReturn(c, global.Success, global.MsgGeneral, nil, "")
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"wechat/conf"
+	"wechat/global"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -22,9 +23,9 @@ func DBInit() bool { //连接RDS
 	DB.SetConnMaxLifetime(100)
 	DB.SetMaxIdleConns(10)
 	if err := DB.Ping(); err != nil {
-		fmt.Println("Error: DBInit ", err)
+		global.UnifiedPrintln("数据库Ping失败", err)
 	}
-	fmt.Println("数据库连接成功")
+	global.UnifiedPrintln("数据库连接成功", nil)
 	return true
 }
 
