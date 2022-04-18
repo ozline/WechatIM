@@ -2,6 +2,7 @@ package structs
 
 import (
 	"github.com/golang-jwt/jwt"
+	"github.com/streadway/amqp"
 )
 
 type User struct {
@@ -49,4 +50,21 @@ type JWTClaims struct {
 	Username string `json:"username"`
 	Status   int    `json:"status" example:"0"`
 	jwt.StandardClaims
+}
+
+type RabbitMQ struct {
+	Conn      *amqp.Connection
+	Channel   *amqp.Channel
+	Queue     amqp.Queue
+	QueueName string `example:""` //队列名称
+	Exchange  string `example:""` //交换机名称
+	Key       string `example:""` //Key
+	Mqurl     string `example:""` //链接信息
+}
+
+type Message struct {
+	Sender   string `json:"sender"`   //发送者的USERID
+	Receiver string `json:"receiver"` //0=群发 其他=用户ID
+	// Type   int    `json:"type" example:"0"`           //消息类型 0=私聊 1=群发
+	Msg string `json:"msg" example:"emptyMessage"` //消息正文
 }

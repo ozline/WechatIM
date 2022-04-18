@@ -4,7 +4,7 @@ import (
 	"os"
 	"wechat/conf"
 	"wechat/global"
-	"wechat/model"
+	"wechat/middleware"
 	"wechat/routes"
 )
 
@@ -18,7 +18,7 @@ func main() {
 	}
 
 	//连接数据库和RabbitMQ
-	if model.DBInit() && model.RabbitMQInit() {
+	if middleware.DBInit() && middleware.RabbitMQInit() {
 		r := routes.NewRouter()
 		_ = r.Run("0.0.0.0:" + HTTP_PORT)
 	} else {

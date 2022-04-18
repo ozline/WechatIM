@@ -1,10 +1,9 @@
 package services
 
-import(
-	"wechat/conf"
+import (
 	"errors"
+	"wechat/conf"
 	"wechat/middleware"
-	"wechat/model"
 	"wechat/structs"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -14,12 +13,12 @@ import(
 func AddUser(info structs.User) (bool, error) {
 	var tmplory string
 	cmd := "SELECT password FROM `" + conf.Config.Mysql.Table.Users + "` where username = '" + info.Username + "'"
-	err := model.DB.QueryRow(cmd).Scan(&tmplory)
+	err := middleware.DB.QueryRow(cmd).Scan(&tmplory)
 	if err == nil {
 		return false, errors.New("用户已经存在")
 	}
 
-	tx, err := model.DB.Begin()
+	tx, err := middleware.DB.Begin()
 	if err != nil {
 		return false, err
 	}
@@ -28,7 +27,7 @@ func AddUser(info structs.User) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = tmp.Exec(info.Username, middleware.GenerateTokenSHA256(info.Password),middleware.GetTimestamp(),info.Username)
+	_, err = tmp.Exec(info.Username, middleware.GenerateTokenSHA256(info.Password), middleware.GetTimestamp(), info.Username)
 	if err != nil {
 		return false, err
 	}
@@ -42,7 +41,7 @@ func CheckUser(info structs.User) (string, int, error) {
 	var id string
 	var status int
 	cmd := "SELECT password,id,status FROM `" + conf.Config.Mysql.Table.Users + "` where username = '" + info.Username + "'"
-	err := model.DB.QueryRow(cmd).Scan(&password, &id, &status)
+	err := middleware.DB.QueryRow(cmd).Scan(&password, &id, &status)
 	if err != nil {
 		return "-1", 0, err
 	}

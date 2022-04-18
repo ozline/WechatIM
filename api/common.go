@@ -1,12 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 	"wechat/conf"
 	"wechat/global"
 	"wechat/middleware"
-	"wechat/model"
 	"wechat/structs"
 
 	"github.com/gin-gonic/gin"
@@ -63,6 +63,12 @@ func Ping(c *gin.Context) {
 }
 
 func Chat(c *gin.Context) {
+	var senderName = c.Request.Header.Get("username")
+	var receiverName = c.Request.Header.Get("sendto")
+	if senderName == "" || receiverName == "" {
+		global.UnifiedReturn(c, global.ErrorParams, "连接鉴权失败", nil, "")
+		return
+	}
 	//升级为webSocket协议
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if !global.UnifiedErrorHandle(err, "升级WebSocket协议") {
@@ -71,21 +77,23 @@ func Chat(c *gin.Context) {
 	defer ws.Close()
 	var forever chan struct{}
 
+	var rabbit structs.RabbitMQ
+
 	//创建信道
-	ch := model.RabbitMQCreateChannel()
-	defer ch.Close()
+	rabbit.Channel = middleware.RabbitMQCreateChannel()
+	defer rabbit.Channel.Close()
 	//创建交换机
-	result := model.RabbitMQCreateExchange(ch, "TestExchange")
+	result := middleware.RabbitMQCreateExchange(rabbit.Channel, "TestExchange")
 	if !result {
 		global.UnifiedPrintln("RabbitMQ创建交换机失败", nil)
 	}
 
 	//创建随机Queue并绑定至交换机
-	q := model.RabbitMQCreateQueue(ch, "")
-	result = model.RabbitMQQueueBind(ch, q, "TestExchange")
+	rabbit.Queue = middleware.RabbitMQCreateQueue(rabbit.Channel, "")
+	result = middleware.RabbitMQQueueBind(rabbit.Channel, rabbit.Queue, "TestExchange")
 
 	//创建消费者
-	msgs := model.RabbitMQConsume(ch)
+	msgs := middleware.RabbitMQConsume(rabbit.Channel)
 
 	//Websocket接收消息，推送至RabbitMQ
 	go func() {
@@ -97,7 +105,14 @@ func Chat(c *gin.Context) {
 				ws.WriteMessage(websocket.TextMessage, []byte("pong"))
 				continue
 			}
-			if !global.UnifiedErrorHandle(err, "Websocket发送消息") || !model.RabbitMQExchangePublish(ch, "TestExchange", message) {
+
+			var msg structs.Message
+			msg.Sender = senderName
+			msg.Receiver = receiverName
+			msg.Msg = string(message)
+			tmp, err := json.Marshal(msg)
+
+			if !global.UnifiedErrorHandle(err, "Websocket发送消息") || !middleware.RabbitMQExchangePublish(rabbit.Channel, "TestExchange", tmp) {
 				return
 			}
 		}
@@ -106,7 +121,19 @@ func Chat(c *gin.Context) {
 	//接收RabbitMQ消息，推送至Websocket
 	go func() {
 		for d := range msgs {
-			err = ws.WriteMessage(websocket.TextMessage, d.Body)
+			//构建推送Json
+
+			var msg structs.Message
+			err = json.Unmarshal(d.Body, &msg)
+			if !global.UnifiedErrorHandle(err, "生成发送JSON") {
+				return
+			}
+
+			if msg.Sender == senderName { //发送者是我自己，不接收
+				continue
+			}
+			//推送消息
+			err = ws.WriteMessage(websocket.TextMessage, []byte(msg.Msg))
 			if !global.UnifiedErrorHandle(err, "Websocket读取消息") {
 				return
 			}
