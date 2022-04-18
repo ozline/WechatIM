@@ -91,6 +91,12 @@ func Chat(c *gin.Context) {
 	go func() {
 		for {
 			_, message, err := ws.ReadMessage()
+
+			//心跳检测
+			if string(message) == "ping" {
+				ws.WriteMessage(websocket.TextMessage, []byte("pong"))
+				continue
+			}
 			if !global.UnifiedErrorHandle(err, "Websocket发送消息") || !model.RabbitMQExchangePublish(ch, "TestExchange", message) {
 				return
 			}
