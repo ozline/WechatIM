@@ -102,21 +102,26 @@ func RabbitMQHandle(ws *websocket.Conn, senderName string, receiverName string) 
 	//Websocket接收消息，推送至RabbitMQ
 	go func() {
 		for {
+			//服务端心跳检测使用
 			//设置链接限时，10分钟(600秒)没有操作则自动销毁
 			ws.SetReadDeadline(time.Now().Add(time.Duration(600) * time.Second))
 			_, message, err := ws.ReadMessage()
+			if !global.UnifiedErrorHandle(err, "WebSocket ReadMessage") {
+				ws.Close()
+				return
+			}
 
-			//心跳检测
+			//客户端心跳检测使用
 			if string(message) == "ping" {
 				ws.WriteMessage(websocket.TextMessage, []byte("pong"))
 				continue
 			}
 
-			var msg structs.Message
-			msg.Sender = senderName
-			msg.Receiver = receiverName
-			msg.Msg = string(message)
-			tmp, err := json.Marshal(msg)
+			tmp, err := json.Marshal(structs.Message{
+				Sender:   senderName,
+				Receiver: receiverName,
+				Msg:      string(message),
+			})
 
 			if !global.UnifiedErrorHandle(err, "Websocket发送消息") || !middleware.RabbitMQExchangePublish(rabbit.Channel, "TestExchange", tmp) {
 				return
