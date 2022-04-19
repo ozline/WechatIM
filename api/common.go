@@ -102,6 +102,8 @@ func RabbitMQHandle(ws *websocket.Conn, senderName string, receiverName string) 
 	//Websocket接收消息，推送至RabbitMQ
 	go func() {
 		for {
+			//设置链接限时，10分钟(600秒)没有操作则自动销毁
+			ws.SetReadDeadline(time.Now().Add(time.Duration(600) * time.Second))
 			_, message, err := ws.ReadMessage()
 
 			//心跳检测
