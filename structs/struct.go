@@ -7,12 +7,12 @@ import (
 
 type User struct {
 	Id       string `json:"id" example:"-1" form:"id"`
-	Username string `json:"username" example:""`
+	Username string `json:"username" example:"" form:"username"`
 	Password string `json:"password" example:"" form:"password"`
 	Status   string `json:"status" example:"0"`
 	CreateAt string `json:"createat" example:"0"`
 	Nickname string `json:"nickname" example:"" form:"nickname"`
-	Phone    string `json:"phone" example:"" form:"phone"`
+	Phone    string `json:"phone" example:"" form:"phone" form:"phone"`
 	Email    string `json:"email" example:"" form:"email"`
 	Avatar   string `json:"avatar" example:""`
 	Gender   string `json:"gender" example:"0" form:"gender"`
@@ -29,7 +29,7 @@ type Conf struct {
 		DBName   string `yaml:"dbname"`
 		Table    struct {
 			Users string `yaml:"users"`
-			Test  string `yaml:"test"`
+			Rooms string `yaml:"rooms"`
 			// Group   string `yaml:"messages_group"`
 			// Private string `yaml:"messages_private"`
 		}
@@ -44,6 +44,9 @@ type Conf struct {
 		Port     string `yamp:"port"`
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
+		Key      struct {
+			Users string `yaml:"users"`
+		}
 	}
 	Admin struct {
 		Secret string `yaml:"secret"`
@@ -62,10 +65,13 @@ type RabbitMQ struct {
 	Conn      *amqp.Connection
 	Channel   *amqp.Channel
 	Queue     amqp.Queue
-	QueueName string `example:""` //队列名称
-	Exchange  string `example:""` //交换机名称
-	Key       string `example:""` //Key
-	Mqurl     string `example:""` //链接信息
+	QueueName string   `example:""` //队列名称
+	Exchange  struct { //交换机信息
+		Sender   string
+		Receiver string
+	}
+	Key   string `example:""` //Key
+	Mqurl string `example:""` //链接信息
 }
 
 type Message struct {
@@ -73,4 +79,11 @@ type Message struct {
 	Receiver string `json:"receiver"` //0=群发 其他=用户ID
 	// Type   int    `json:"type" example:"0"`           //消息类型 0=私聊 1=群发
 	Msg string `json:"msg" example:"emptyMessage"` //消息正文
+}
+
+type Room struct {
+	Name  string `form:"name"`
+	Owner string `form:"owner"`
+	// Members string `form:"members"` //这个是json文本
+	ExchangeName string //交换机标识
 }

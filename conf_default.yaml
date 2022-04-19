@@ -17,6 +17,8 @@ redis:
   port: 6379
   username:
   password:
+  key:
+    users: #保存用户登录登出状态的表
 admin:
   secret: #BASE64,JWTToken
   name: #签名颁发者,JWTToken

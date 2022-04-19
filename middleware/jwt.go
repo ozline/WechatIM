@@ -1,10 +1,10 @@
 package middleware
 
 import (
-	"wechat/conf"
-	"wechat/structs"
-	"wechat/global"
 	"time"
+	"wechat/conf"
+	"wechat/global"
+	"wechat/structs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
@@ -14,13 +14,13 @@ func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Request.Header.Get("AuthToken")
 		if token == "" {
-			global.UnifiedReturn(c,global.ErrorJWTCheck,"AuthToken验证失败",nil,"")
+			global.UnifiedReturn(c, global.ErrorJWTCheck, global.ErrorJWTChcek, nil, "")
 			c.Abort()
 			return
 		}
 		claims, err := JWTParse(token)
 		if err != nil || claims.ExpiresAt < time.Now().Unix() {
-			global.UnifiedReturn(c,global.ErrorJWTCheck,"AuthToken验证失败",nil,"")
+			global.UnifiedReturn(c, global.ErrorJWTCheck, global.ErrorJWTChcek, nil, "")
 			c.Abort()
 			return
 		}

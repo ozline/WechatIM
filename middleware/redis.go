@@ -18,12 +18,6 @@ func RedisDBInit() bool {
 	})
 	_, err := RedisDB.Ping().Result()
 
-	tmp, _ := RedisDB.HGetAll("test123456").Result()
-
-	for d := range tmp {
-		global.UnifiedPrintln(d+" = "+tmp[d], nil)
-	}
-
 	return global.UnifiedErrorHandle(err, "RedisDB连接")
 }
 
@@ -32,8 +26,26 @@ func RedisDBHMSet(key string, fields map[string]interface{}) bool {
 	return global.UnifiedErrorHandle(err, "RedisDB 哈希插入 return:"+result) && result == "OK"
 }
 
-func RedisDBHMSet_Message(key string, msg string) bool {
-	tmp2 := make(map[string]interface{})
-	tmp2[fmt.Sprint(GetTimestamp13())] = msg
-	return RedisDBHMSet(key, tmp2)
+func RedisDBHDel(key string, fields string) bool {
+	result, err := RedisDB.HDel(key, fields).Result()
+	return global.UnifiedErrorHandle(err, "RedisDB 删除 Return:"+fmt.Sprint(result))
+}
+
+func RedisDBHexists(key string, fields string) bool {
+	result, err := RedisDB.HExists(key, fields).Result()
+	if global.UnifiedErrorHandle(err, "RedisDB 查询fields Return:"+fmt.Sprint(result)) {
+		return result
+	} else {
+		return false
+	}
+}
+
+func RedisDBHGet(key string, fields string) string {
+	result, err := RedisDB.HGet(key, fields).Result()
+	res := global.UnifiedErrorHandle(err, "RedisDB HGET Return:"+fmt.Sprint(result))
+	if res {
+		return result
+	} else {
+		return ""
+	}
 }

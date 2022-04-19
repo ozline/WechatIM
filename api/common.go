@@ -7,12 +7,19 @@ import (
 	"wechat/conf"
 	"wechat/global"
 	"wechat/middleware"
+	"wechat/services"
 	"wechat/structs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/websocket"
 )
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 func GetAuthToken(id string, username string, status int) (string, error) {
 	claims := structs.JWTClaims{
@@ -46,12 +53,6 @@ func UpdateAuthToken(c *gin.Context) string {
 	}
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
 func Ping(c *gin.Context) {
 	token := c.Request.Header.Get("AuthToken")
 	if token != "" {
@@ -76,38 +77,61 @@ func Chat(c *gin.Context) {
 	}
 	defer ws.Close()
 
-	RabbitMQHandle(ws, senderName, receiverName)
+	RabbitMQHandler(ws, senderName, receiverName)
 }
 
-func RabbitMQHandle(ws *websocket.Conn, senderName string, receiverName string) {
+func RabbitMQHandler(ws *websocket.Conn, senderName string, receiverName string) {
 	var err error
 	var forever chan struct{}
 	var rabbit structs.RabbitMQ
+
+	//在RedisDB中令用户上线
+	if !services.RedisDB_UserOnline(senderName) {
+		return
+	}
+
+	//测试用
+	rabbit.Exchange.Sender = middleware.GenerateTokenSHA256(senderName)
+	rabbit.Exchange.Receiver = middleware.GenerateTokenSHA256(receiverName)
+
 	//创建信道
 	rabbit.Channel = middleware.RabbitMQCreateChannel()
 	defer rabbit.Channel.Close()
+
 	//创建交换机
-	result := middleware.RabbitMQCreateExchange(rabbit.Channel, "TestExchange")
+	result := middleware.RabbitMQCreateExchange(rabbit.Channel, rabbit.Exchange.Sender, middleware.RabbitMQ_Direct) && middleware.RabbitMQCreateExchange(rabbit.Channel, rabbit.Exchange.Receiver, middleware.RabbitMQ_Direct)
+
 	if !result {
 		global.UnifiedPrintln("RabbitMQ创建交换机失败", nil)
+		return
 	}
 
-	//创建随机Queue并绑定至交换机
+	//创建随机Queue并绑定至本地交换机 - 用于消费消息
 	rabbit.Queue = middleware.RabbitMQCreateQueue(rabbit.Channel, "")
-	result = middleware.RabbitMQQueueBind(rabbit.Channel, rabbit.Queue, "TestExchange")
+	result = middleware.RabbitMQQueueBind(rabbit.Channel, rabbit.Queue, rabbit.Exchange.Sender, rabbit.Exchange.Sender)
+
+	//绑定对方交换机到我们交换机，获取对方传来的信息
+	result = middleware.RabbitMQExchangeBind(rabbit.Channel, rabbit.Exchange.Sender, rabbit.Exchange.Receiver, rabbit.Exchange.Sender)
+	if !result {
+		global.UnifiedPrintln("RabbitMQ绑定交换机队列失败", nil)
+	}
 
 	//创建消费者
-	msgs := middleware.RabbitMQConsume(rabbit.Channel)
+	msgs := middleware.RabbitMQConsume(rabbit.Channel, rabbit.Queue)
 
 	//Websocket接收消息，推送至RabbitMQ
 	go func() {
 		for {
 			//服务端心跳检测使用
-			//设置链接限时，10分钟(600秒)没有操作则自动销毁
+			//设置链接限时，10分钟(600秒)没有操作则进入销毁
 			ws.SetReadDeadline(time.Now().Add(time.Duration(600) * time.Second))
-			_, message, err := ws.ReadMessage()
+			messageType, message, err := ws.ReadMessage()
+
+			if messageType == -1 { //侦测到退出
+				services.RedisDB_UserExit(senderName)
+				return
+			}
 			if !global.UnifiedErrorHandle(err, "WebSocket ReadMessage") {
-				ws.Close()
 				return
 			}
 
@@ -123,7 +147,8 @@ func RabbitMQHandle(ws *websocket.Conn, senderName string, receiverName string) 
 				Msg:      string(message),
 			})
 
-			if !global.UnifiedErrorHandle(err, "Websocket发送消息") || !middleware.RabbitMQExchangePublish(rabbit.Channel, "TestExchange", tmp) {
+			res := global.UnifiedErrorHandle(err, "Websocket发送消息") && middleware.RabbitMQExchangePublish(rabbit.Channel, rabbit.Exchange.Receiver, tmp, rabbit.Exchange.Receiver)
+			if !res {
 				return
 			}
 		}
@@ -150,5 +175,6 @@ func RabbitMQHandle(ws *websocket.Conn, senderName string, receiverName string) 
 			}
 		}
 	}()
+
 	<-forever
 }

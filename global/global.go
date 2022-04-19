@@ -13,12 +13,16 @@ const (
 	ErrorGeneral  = 500   //常规Error
 	ErrorJWTCheck = 10001 //JWT验证错误
 	ErrorParams   = 10002 //参数获取错误
-	ErrorUsers    = 10003 //用户类操作错误
-	ErrorChats    = 10004 //聊天操作错误
+	ErrorUsers    = 10003 //登录失败
+	ErrorDatabase = 10004 //数据库操作错误
+	ErrorChats    = 10005 //聊天操作错误
 )
 
 const (
 	MsgGeneral = "ok" //默认返回
+
+	ErrorDefault  = "未知错误"
+	ErrorJWTChcek = "AuthToken验证失败"
 )
 
 func UnifiedReturn(c *gin.Context, code int, msg interface{}, data interface{}, token string) {
@@ -27,7 +31,7 @@ func UnifiedReturn(c *gin.Context, code int, msg interface{}, data interface{}, 
 		str = "ok"
 	}
 
-	c.Header("AuthToken", token) //token为空直接没有这个header，好评
+	c.Header("AuthToken", token) //token为空直接没有这个header
 	c.JSON(http.StatusOK, gin.H{
 		"code": code,
 		"msg":  str,

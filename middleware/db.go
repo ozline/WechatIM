@@ -33,7 +33,10 @@ func DBDestory() {
 //获取数量，where表示限定条件，不需要再写WHERE，但是多条件要加AND
 func DBGetCount(table string, where string) (int, error) {
 	cmd := "SELECT count(*) from `" + conf.Config.Mysql.DBName + "`.`" + table + "`"
-	cmd += " WHERE " + where
+	if where != "" {
+		cmd += " WHERE " + where
+	}
+
 	var count = 0
 	err := DB.QueryRow(cmd).Scan(&count)
 	if global.UnifiedErrorHandle(err, "DB 查询行数") {
@@ -53,7 +56,7 @@ func DBCommit(statement string, args ...interface{}) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = tmp.Exec(args)
+	_, err = tmp.Exec(args...)
 	if err != nil {
 		return false, err
 	}

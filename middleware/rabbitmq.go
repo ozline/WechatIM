@@ -10,6 +10,11 @@ import (
 
 var Conn *amqp.Connection
 
+const (
+	RabbitMQ_Fanout = "fanout"
+	RabbitMQ_Direct = "direct"
+)
+
 func RabbitMQInit() bool {
 	var err error
 	path := strings.Join([]string{
@@ -41,10 +46,11 @@ func RabbitMQCreateQueue(ch *amqp.Channel, name string) amqp.Queue {
 	return q
 }
 
-func RabbitMQCreateExchange(ch *amqp.Channel, name string) bool {
+func RabbitMQCreateExchange(ch *amqp.Channel, name string, kind string) bool {
+	//kind 有 fanout:群发 和 direct: 定向
 	err := ch.ExchangeDeclare(
 		name,
-		"fanout",
+		kind,
 		true,
 		false,
 		false,
@@ -54,10 +60,10 @@ func RabbitMQCreateExchange(ch *amqp.Channel, name string) bool {
 	return global.UnifiedErrorHandle(err, "RabbitMQ声明交换机")
 }
 
-func RabbitMQQueueBind(ch *amqp.Channel, q amqp.Queue, exchange string) bool {
+func RabbitMQQueueBind(ch *amqp.Channel, q amqp.Queue, exchange string, key string) bool {
 	err := ch.QueueBind(
 		q.Name,
-		"",
+		key,
 		exchange,
 		false,
 		nil,
@@ -65,24 +71,21 @@ func RabbitMQQueueBind(ch *amqp.Channel, q amqp.Queue, exchange string) bool {
 	return global.UnifiedErrorHandle(err, "RabbitMQ队列绑定交换机")
 }
 
-func RabbitMQQueuePublish(ch *amqp.Channel, q amqp.Queue, body []byte) bool {
-	err := ch.Publish(
-		"",
-		q.Name,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        body,
-		},
+func RabbitMQExchangeBind(ch *amqp.Channel, destination string, source string, key string) bool {
+	err := ch.ExchangeBind(
+		destination,
+		key,
+		source,
+		true,
+		nil,
 	)
-	return global.UnifiedErrorHandle(err, "RabbitMQ发送消息_Queue")
+	return global.UnifiedErrorHandle(err, "RabbitMQ交换机绑定交换机")
 }
 
-func RabbitMQExchangePublish(ch *amqp.Channel, exchange string, body []byte) bool {
+func RabbitMQExchangePublish(ch *amqp.Channel, exchange string, body []byte, key string) bool {
 	err := ch.Publish(
 		exchange,
-		"",
+		key,
 		false,
 		false,
 		amqp.Publishing{
@@ -93,9 +96,9 @@ func RabbitMQExchangePublish(ch *amqp.Channel, exchange string, body []byte) boo
 	return global.UnifiedErrorHandle(err, "RabbitMQ发送消息_Exchange")
 }
 
-func RabbitMQConsume(ch *amqp.Channel) <-chan amqp.Delivery {
+func RabbitMQConsume(ch *amqp.Channel, queue amqp.Queue) <-chan amqp.Delivery {
 	msgs, err := ch.Consume(
-		"",
+		queue.Name,
 		"",
 		true,
 		false,
