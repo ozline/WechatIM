@@ -18,7 +18,7 @@ func main() {
 	}
 
 	//连接数据库和RabbitMQ
-	if middleware.DBInit() && middleware.RabbitMQInit() {
+	if middleware.DBInit() && middleware.RabbitMQInit() && middleware.RedisDBInit() {
 		r := routes.NewRouter()
 		_ = r.Run("0.0.0.0:" + HTTP_PORT)
 	} else {

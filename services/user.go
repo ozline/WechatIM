@@ -27,7 +27,7 @@ func AddUser(info structs.User) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = tmp.Exec(info.Username, middleware.GenerateTokenSHA256(info.Password), middleware.GetTimestamp(), info.Username)
+	_, err = tmp.Exec(info.Username, middleware.GenerateTokenSHA256(info.Password), middleware.GetTimestamp13(), info.Username)
 	if err != nil {
 		return false, err
 	}

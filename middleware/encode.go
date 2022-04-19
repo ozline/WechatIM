@@ -1,6 +1,6 @@
 package middleware
 
-import(
+import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/binary"
@@ -25,7 +25,7 @@ func GenerateMD5(str string) string {
 
 func GenerateMD5Random() string {
 	h := md5.New()
-	h.Write([]byte(Int64ToBytes(GetTimestamp())))
+	h.Write([]byte(Int64ToBytes(GetTimestamp13())))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -52,6 +52,10 @@ func Int64ToBytes(i int64) []byte {
 	return buf
 }
 
-func GetTimestamp() int64 {
+func GetTimestamp13() int64 {
 	return time.Now().UnixNano() / 1e6
+}
+
+func GetTimestamp10() int64 {
+	return time.Now().Unix()
 }

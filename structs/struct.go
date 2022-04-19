@@ -28,14 +28,20 @@ type Conf struct {
 		Port     string `yaml:"port"`
 		DBName   string `yaml:"dbname"`
 		Table    struct {
-			Users   string `yaml:"users"`
-			Test    string `yaml:"test"`
-			Group   string `yaml:"messages_group"`
-			Private string `yaml:"messages_private"`
+			Users string `yaml:"users"`
+			Test  string `yaml:"test"`
+			// Group   string `yaml:"messages_group"`
+			// Private string `yaml:"messages_private"`
 		}
 	}
 	RabbitMQ struct {
 		Address  string `yaml:"address"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	}
+	Redis struct {
+		Address  string `yaml:"address"`
+		Port     string `yamp:"port"`
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 	}

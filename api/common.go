@@ -75,10 +75,14 @@ func Chat(c *gin.Context) {
 		return
 	}
 	defer ws.Close()
+
+	RabbitMQHandle(ws, senderName, receiverName)
+}
+
+func RabbitMQHandle(ws *websocket.Conn, senderName string, receiverName string) {
+	var err error
 	var forever chan struct{}
-
 	var rabbit structs.RabbitMQ
-
 	//创建信道
 	rabbit.Channel = middleware.RabbitMQCreateChannel()
 	defer rabbit.Channel.Close()

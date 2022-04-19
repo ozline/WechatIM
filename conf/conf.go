@@ -2,8 +2,9 @@ package conf
 
 import (
 	"fmt"
-	"wechat/structs"
 	"io/ioutil"
+	"wechat/global"
+	"wechat/structs"
 
 	"gopkg.in/yaml.v2"
 )
@@ -21,5 +22,5 @@ func Init() {
 		fmt.Println("GetConf err", err)
 	}
 	Config = tmp
-	fmt.Println("获取配置文件成功")
+	global.UnifiedPrintln("获取配置文件成功", nil)
 }
