@@ -62,16 +62,21 @@ type JWTClaims struct {
 }
 
 type RabbitMQ struct {
-	Conn      *amqp.Connection
-	Channel   *amqp.Channel
-	Queue     amqp.Queue
-	QueueName string   `example:""` //队列名称
-	Exchange  struct { //交换机信息
+	Conn     *amqp.Connection
+	Channel  *amqp.Channel
+	Queue    amqp.Queue
+	Exchange struct { //交换机ID
 		Sender   string
 		Receiver string
 	}
-	Key   string `example:""` //Key
-	Mqurl string `example:""` //链接信息
+	Kind struct { //交换机种类
+		Sender   string
+		Receiver string
+	}
+	Key struct { //交换机Key
+		Sender   string `example:""`
+		Receiver string `exmple:""`
+	}
 }
 
 type Message struct {
