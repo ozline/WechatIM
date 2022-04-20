@@ -27,8 +27,15 @@ func RabbitMQHandler(ws *websocket.Conn, sender string, receiver string, mode in
 	}
 
 	//设定交换机ID信息
-	rabbit.Exchange.Sender = middleware.GenerateTokenSHA256(sender)
-	rabbit.Exchange.Receiver = middleware.GenerateTokenSHA256(receiver)
+	if mode == 1 { //私聊
+		rabbit.Exchange.Sender = middleware.GenerateTokenSHA256(sender)
+		rabbit.Exchange.Receiver = middleware.GenerateTokenSHA256(receiver)
+	} else if mode == 2 { //群聊
+		rabbit.Exchange.Sender = middleware.GenerateTokenSHA256(sender)
+		rabbit.Exchange.Receiver = receiver //数据库中已存SHA256结果
+	} else {
+		return
+	}
 
 	//设定交换机Key信息
 	if mode == 1 { //私聊

@@ -2,22 +2,44 @@ package services
 
 import (
 	"wechat/conf"
+	"wechat/global"
 	"wechat/middleware"
 	"wechat/structs"
 )
 
 func RoomCreate(room structs.Room) (bool, error) {
-	cmd := "INSERT INTO `" + conf.Config.Mysql.DBName + "`.`" + conf.Config.Mysql.Table.Rooms + "` (`name`,`owner`,`create_at`,`exchange_id`) VALUES (?, ?, ?)"
+	cmd := "INSERT INTO `" + conf.Config.Mysql.DBName + "`.`" + conf.Config.Mysql.Table.Rooms + "` (`name`,`owner`,`create_at`,`exchange_id`,`status`) VALUES (?, ?, ?, ?, ?)"
 
-	return middleware.DBCommit(cmd, room.Name, room.Owner, middleware.GetTimestamp13(), middleware.GenerateTokenSHA256(room.Name+room.Owner))
+	return middleware.DBCommit(cmd, room.Name, room.Owner, middleware.GetTimestamp13(), middleware.GenerateTokenSHA256("Room="+room.Name+room.Owner), 0)
 }
 
-// func RoomGetAll(user structs.User)
+func GetRoomExchangeID(roomid string) string {
+	var room string
+
+	cmd := "SELECT exchange_id FROM `" + conf.Config.Mysql.Table.Rooms + "`"
+	cmd += " WHERE `roomid`=" + roomid
+	err := middleware.DB.QueryRow(cmd).Scan(&room)
+	if !global.UnifiedErrorHandle(err, "获取房间ExchangeID出错") {
+		room = "-1"
+	}
+	return room
+}
+
+func GetRoomOwner(roomid string) string {
+	var room string
+
+	cmd := "SELECT owner FROM `" + conf.Config.Mysql.Table.Rooms + "`"
+	cmd += " WHERE `roomid`=" + roomid
+	err := middleware.DB.QueryRow(cmd).Scan(&room)
+	if !global.UnifiedErrorHandle(err, "获取房间主人信息出错") {
+		room = "-1"
+	}
+	return room
+}
 
 func RoomDelete(roomid string) (bool, error) {
-	return true, nil
+
+	cmd := "DELETE FROM `" + conf.Config.Mysql.DBName + "`.`" + conf.Config.Mysql.Table.Rooms + "` WHERE `roomid`=" + roomid
+
+	return middleware.DBCommit(cmd)
 }
-
-// func RoomAddMember(user structs.User)
-
-// func RoomDeleteMember(user structs.User)

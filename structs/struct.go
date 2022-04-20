@@ -30,8 +30,6 @@ type Conf struct {
 		Table    struct {
 			Users string `yaml:"users"`
 			Rooms string `yaml:"rooms"`
-			// Group   string `yaml:"messages_group"`
-			// Private string `yaml:"messages_private"`
 		}
 	}
 	RabbitMQ struct {
@@ -80,15 +78,20 @@ type RabbitMQ struct {
 }
 
 type Message struct {
-	Sender   string `json:"sender"`   //发送者的USERID
-	Receiver string `json:"receiver"` //0=群发 其他=用户ID
-	// Type   int    `json:"type" example:"0"`           //消息类型 0=私聊 1=群发
-	Msg string `json:"msg" example:"emptyMessage"` //消息正文
+	Sender   string `json:"sender"`
+	Receiver string `json:"receiver"`
+	Msg      string `json:"msg" example:"emptyMessage"` //消息正文
 }
 
 type Room struct {
-	Name  string `form:"name"`
-	Owner string `form:"owner"`
-	// Members string `form:"members"` //这个是json文本
+	Roomid       string
+	Name         string `form:"name"`
+	Owner        string `form:"owner"`
+	Status       string `form:"status"`
 	ExchangeName string //交换机标识
+	CreateAt     string //创建时间,13位时间戳
+}
+
+type Test struct {
+	Count string
 }

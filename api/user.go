@@ -40,7 +40,7 @@ func UserLogin(c *gin.Context) {
 	if err != nil {
 		global.UnifiedReturn(c, global.ErrorUsers, err.Error(), nil, "")
 	} else {
-		token, _ := GetAuthToken(id, info.Username, isadmin)
+		token, _ := services.GetAuthToken(id, info.Username, isadmin)
 		global.UnifiedReturn(c, global.Success, nil, nil, token)
 	}
 }

@@ -39,7 +39,7 @@ func DBGetCount(table string, where string) (int, error) {
 
 	var count = 0
 	err := DB.QueryRow(cmd).Scan(&count)
-	if global.UnifiedErrorHandle(err, "DB 查询行数") {
+	if !global.UnifiedErrorHandle(err, "DB 查询行数") {
 		return -1, err
 	} else {
 		return count, nil
@@ -56,7 +56,13 @@ func DBCommit(statement string, args ...interface{}) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = tmp.Exec(args...)
+
+	if args != nil {
+		_, err = tmp.Exec(args...)
+	} else {
+		_, err = tmp.Exec()
+	}
+
 	if err != nil {
 		return false, err
 	}

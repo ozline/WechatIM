@@ -10,24 +10,25 @@ import (
 const (
 	Success = 200
 
-	ErrorGeneral  = 500   //常规Error
-	ErrorJWTCheck = 10001 //JWT验证错误
-	ErrorParams   = 10002 //参数获取错误
-	ErrorUsers    = 10003 //登录失败
-	ErrorDatabase = 10004 //数据库操作错误
-	ErrorChats    = 10005 //聊天操作错误
+	ErrorGeneral    = 500   //常规Error
+	ErrorJWTCheck   = 10001 //JWT验证错误
+	ErrorParams     = 10002 //参数获取错误
+	ErrorUsers      = 10003 //登录失败
+	ErrorDatabase   = 10004 //数据库操作错误
+	ErrorChats      = 10005 //聊天操作错误
+	ErrorPermission = 10006 //权限出错
 )
 
 const (
 	MsgGeneral = "ok" //默认返回
 
 	ErrorDefault  = "未知错误"
-	ErrorJWTChcek = "AuthToken验证失败"
+	ErrorJWTChcek = "解析用户出错"
 )
 
 func UnifiedReturn(c *gin.Context, code int, msg interface{}, data interface{}, token string) {
 	str := msg
-	if code == Success || msg == nil {
+	if code == Success && msg == nil {
 		str = "ok"
 	}
 

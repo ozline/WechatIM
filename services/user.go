@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"wechat/conf"
+	"wechat/global"
 	"wechat/middleware"
 	"wechat/structs"
 
@@ -41,6 +42,12 @@ func CheckUser(info structs.User) (string, int, error) {
 	}
 }
 
+func CheckUserExist(userid string) bool {
+	count, err := middleware.DBGetCount(conf.Config.Mysql.Table.Users, "id = "+userid)
+	global.UnifiedErrorHandle(err, "检查用户是否存在")
+	return count == 1
+}
+
 func RedisDB_UserOnline(userid string) bool {
 	tmp := make(map[string]interface{})
 	tmp[userid] = fmt.Sprint(middleware.GetTimestamp13())
@@ -58,4 +65,12 @@ func RedisDB_CheckUser(userid string) (bool, string) {
 	} else {
 		return false, ""
 	}
+}
+
+func GetUserID(token string) string {
+	claims, err := middleware.JWTParse(token)
+	if err != nil {
+		return "-1"
+	}
+	return claims.Id
 }
