@@ -81,6 +81,7 @@ type Message struct {
 	Sender   string `json:"sender"`
 	Receiver string `json:"receiver"`
 	Msg      string `json:"msg" example:"emptyMessage"` //消息正文
+	SendTime int64  `json:"sendtime"`
 }
 
 type Room struct {

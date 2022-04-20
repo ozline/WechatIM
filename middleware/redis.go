@@ -49,3 +49,15 @@ func RedisDBHGet(key string, fields string) string {
 		return ""
 	}
 }
+
+func RedisDSBHGetAll(key string) map[string]string {
+	result, err := RedisDB.HGetAll(key).Result()
+	global.UnifiedErrorHandle(err, "RedisDB HGetAll Return:"+fmt.Sprint(result))
+	return result
+}
+
+func RedisDBDel(key string) int64 {
+	result, err := RedisDB.Del(key).Result()
+	global.UnifiedErrorHandle(err, "RedisDB DelKey Return:"+fmt.Sprint(result))
+	return result
+}

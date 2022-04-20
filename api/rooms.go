@@ -52,3 +52,15 @@ func RoomdDelete(c *gin.Context) {
 		global.UnifiedReturn(c, global.ErrorDatabase, global.ErrorDefault, nil, services.UpdateAuthToken(c))
 	}
 }
+
+func RoomSubscribe(c *gin.Context) {
+
+}
+
+func RoomUnSubscribe(c *gin.Context) {
+
+}
+
+func RoomGetSubscribe(c *gin.Context) {
+
+}

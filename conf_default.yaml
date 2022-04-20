@@ -8,6 +8,7 @@ mysql:
   table:
     users: #用户表
     rooms: #房间表
+    subscribes: #订阅列表
 rabbitmq:
   address: #RabbitMQ地址
   username:

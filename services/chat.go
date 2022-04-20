@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"time"
+	"wechat/conf"
 	"wechat/global"
 	"wechat/middleware"
 	"wechat/structs"
@@ -78,6 +79,14 @@ func RabbitMQHandler(ws *websocket.Conn, sender string, receiver string, mode in
 	//开始消费消息
 	msgs := middleware.RabbitMQConsume(rabbit.Channel, rabbit.Queue)
 
+	unSolvedMsg := middleware.RedisDSBHGetAll(receiver + "->" + sender)
+	for d := range unSolvedMsg {
+		ws.WriteMessage(websocket.TextMessage, []byte([]byte(unSolvedMsg[d])))
+	}
+	if len(unSolvedMsg) != 0 {
+		middleware.RedisDBDel(receiver + "->" + sender)
+	}
+
 	//Websocket接收消息，推送至RabbitMQ
 	go func() {
 		for {
@@ -88,6 +97,7 @@ func RabbitMQHandler(ws *websocket.Conn, sender string, receiver string, mode in
 
 			if messageType == -1 { //退出
 				RedisDB_UserExit(sender)
+				ws.Close()
 				return
 			}
 			if !global.UnifiedErrorHandle(err, "WebSocket ReadMessage") {
@@ -104,9 +114,21 @@ func RabbitMQHandler(ws *websocket.Conn, sender string, receiver string, mode in
 				Sender:   sender,
 				Receiver: receiver,
 				Msg:      string(message),
+				SendTime: middleware.GetTimestamp13(),
 			})
 
-			res := global.UnifiedErrorHandle(err, "Websocket发送消息") && middleware.RabbitMQExchangePublish(rabbit.Channel, rabbit.Exchange.Receiver, msgJson, rabbit.Key.Receiver)
+			var res bool
+
+			if mode == 1 && !middleware.RedisDBHexists(conf.Config.Redis.Key.Users, receiver) { //私聊模式，且对方不在线，则推送至Redis
+
+				go RedisDB_SetMessage(sender+"->"+receiver, string(msgJson))
+
+			} else { //群聊模式，或对方在线，直接通过RabbitMQ推送
+				res = middleware.RabbitMQExchangePublish(rabbit.Channel, rabbit.Exchange.Receiver, msgJson, rabbit.Key.Receiver)
+			}
+
+			// res := global.UnifiedErrorHandle(err, "SolveJSON")
+
 			if !res {
 				return
 			}
@@ -116,11 +138,12 @@ func RabbitMQHandler(ws *websocket.Conn, sender string, receiver string, mode in
 	//接收RabbitMQ消息，推送至Websocket
 	go func() {
 		for d := range msgs {
+			ws.SetWriteDeadline(time.Now().Add(time.Duration(600) * time.Second))
 			//构建推送Json
 
 			var msg structs.Message
 			err = json.Unmarshal(d.Body, &msg)
-			if !global.UnifiedErrorHandle(err, "生成发送JSON") {
+			if !global.UnifiedErrorHandle(err, "SolveJSON") {
 				return
 			}
 
@@ -129,7 +152,7 @@ func RabbitMQHandler(ws *websocket.Conn, sender string, receiver string, mode in
 			}
 
 			//推送消息
-			err = ws.WriteMessage(websocket.TextMessage, []byte(msg.Msg))
+			err = ws.WriteMessage(websocket.TextMessage, []byte(d.Body))
 			if !global.UnifiedErrorHandle(err, "Websocket读取消息") {
 				return
 			}
