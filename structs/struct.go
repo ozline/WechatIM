@@ -28,8 +28,9 @@ type Conf struct {
 		Port     string `yaml:"port"`
 		DBName   string `yaml:"dbname"`
 		Table    struct {
-			Users string `yaml:"users"`
-			Rooms string `yaml:"rooms"`
+			Users      string `yaml:"users"`
+			Rooms      string `yaml:"rooms"`
+			Subscribes string `yaml:"subscribes"`
 		}
 	}
 	RabbitMQ struct {

@@ -43,3 +43,21 @@ func RoomDelete(roomid string) (bool, error) {
 
 	return middleware.DBCommit(cmd)
 }
+
+func RoomSubscribe(userid string, roomid string) (bool, error) {
+	cmd := "INSERT INTO `" + conf.Config.Mysql.DBName + "`.`" + conf.Config.Mysql.Table.Subscribes + "` (`userid`,`roomid`,`create_at`) VALUES (?, ?, ?)"
+
+	return middleware.DBCommit(cmd, userid, roomid, middleware.GetTimestamp13())
+}
+
+func RooomUnSubscribe(userid string, roomid string) (bool, error) {
+	cmd := "DELETE FROM `" + conf.Config.Mysql.DBName + "`.`" + conf.Config.Mysql.Table.Subscribes + "` WHERE `roomid`=" + roomid + " AND `userid`=" + userid
+
+	global.UnifiedPrintln(cmd, nil)
+	return middleware.DBCommit(cmd)
+}
+
+func RoomGetSubscribe(userid string) {
+
+	//TODO:照搬一下之前的代码，属于Ctrl CV事件了
+}
